@@ -1,0 +1,32 @@
+[tool.poetry]
+name = "hydrogym"
+version = "0.1.0"
+description = "HydroGym provides is an open-source library of challenge problems in data-driven modeling and control of fluid dynamics."
+authors = ["Your Name <you@example.com>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+jupyterlab = "^3.5"
+ipykernel = "^6.17"
+notebook = "^6.5"
+ipywidgets = "^8"
+mpltools = "^0.2"
+nbformat = "^5.7"
+nbconvert = "^7.2"
+dmsuite = "^0.1"
+gym = "^0.23"
+memory-profiler = "^0.60"
+gmsh = "^4.11"
+modred = "^2.1"
+seaborn = "^0.12"
+control = "^0.9"
+ray = "^2.1"
+torch = "^1.13"
+tensorboard = "^2.11"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
