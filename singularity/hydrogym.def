@@ -10,10 +10,7 @@ Stage: real
   /home/firedrake/firedrake /home/firedrake/firedrake-complex
 
 %files
-  ./../hydrogym /home/hydrogym
-  ./../examples /home/hydrogym/examples
-  ./../setup.py /home/hydrogym
-  ./../requirements.txt /home/hydrogym
+  ./.. /home/hydrogym
 
 %post
   # apt upgrade # this is done in the Docker file, but do we need to?
@@ -34,12 +31,16 @@ Stage: real
 
   # Install an iPython kernel for firedrake (https://github.com/firedrakeproject/firedrake/blob/master/docker/Dockerfile.jupyter)
   #  TODO: THIS SHOULD BE IN AN EXTERNAL FILE...
-  bash -c ". $VENV/bin/activate && pip install -r /home/hydrogym/requirements.txt"
-  bash -c ". $VENV_COMPLEX/bin/activate && pip install -r /home/hydrogym/requirements.txt"
+  # bash -c ". $VENV/bin/activate && pip install -r /home/hydrogym/requirements.txt"
+  # bash -c ". $VENV_COMPLEX/bin/activate && pip install -r /home/hydrogym/requirements.txt"
   bash -c ". $VENV/bin/activate && jupyter nbextension enable --py widgetsnbextension --sys-prefix"
   bash -c ". $VENV_COMPLEX/bin/activate && jupyter nbextension enable --py widgetsnbextension --sys-prefix"
 
 %environment
   export VENV=/home/firedrake/firedrake
   export VENV_COMPLEX=/home/firedrake/firedrake-complex
-  export ENV OMP_NUM_THREADS=1
+  export OMP_NUM_THREADS=1
+
+  export FIREDRAKE_CACHE_DIR=${HOME}/.firedrakeCache
+  export FIREDRAKE_TSFC_KERNEL_CACHE_DIR=${HOME}/.firedrakeCache
+  export PYOP2_CACHE_DIR=${HOME}/.firedrakeCache
