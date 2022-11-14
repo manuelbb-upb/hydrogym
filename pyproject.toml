@@ -5,6 +5,7 @@ description = "HydroGym provides is an open-source library of challenge problems
 authors = ["Your Name <you@example.com>"]
 license = "MIT"
 readme = "README.md"
+exclude = ["singularity" "docker"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
