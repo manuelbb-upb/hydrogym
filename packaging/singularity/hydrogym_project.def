@@ -1,0 +1,46 @@
+Bootstrap: library
+From: manuelbb-upb/hydrobox/firedrake:latest
+
+%post
+  apt update
+  apt install -y git libhdf5-dev libxcursor-dev libxinerama1
+
+  export VENV=/project/firedrake/firedrake
+  export VENV_COMPLEX=/project/firedrake/firedrake-complex
+
+  # update Firedrake and install missing dependencies
+
+  ## normal version first
+  . $VENV/bin/activate
+  pip install --upgrade pip setuptools
+  firedrake-update --documentation-dependencies --tinyasm --slepc --pip-install thetis --pip-install gusto --pip-install icepack --pip-install irksome --pip-install femlium
+  deactivate
+
+  ## complex version second
+  . $VENV_COMPLEX/bin/activate
+  pip install --upgrade pip setuptools
+  firedrake-update --documentation-dependencies --tinyasm --slepc --pip-install thetis --pip-install gusto --pip-install icepack --pip-install irksome --pip-install femlium
+  deactivate
+
+  # Install hydrogym package
+  cd /project
+  git clone https://github.com/dynamicslab/hydrogym.git
+
+  . $VENV/bin/activate
+  pip install -e /project/hydrogym
+  deactivate
+
+  . $VENV_COMPLEX/bin/activate
+  pip install -e /project/hydrogym
+  deactivate
+
+  # make folder `/project/` writable by everyone (for cache and updates)
+  chmod -R a+rwx /project
+
+%environment
+  export VENV=/project/firedrake/firedrake
+  export VENV_COMPLEX=/project/firedrake/firedrake-complex
+  export ENV OMP_NUM_THREADS=1
+
+  # activate VENV by default
+  source ${VENV}/bin/activate

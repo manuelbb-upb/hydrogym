@@ -1,0 +1,64 @@
+Bootstrap: docker
+From: firedrakeproject/firedrake-env:latest
+
+%setup
+	# Everything that happens below is just to copy the hydrogym base
+	# package to our build environment without `git clone`.
+
+	## obtain group id for current process
+	CMDSID=`ps -p $$ -o sid | tail -n 1`
+	## define a bash command to obtain singularity subprocess and print last
+	## command line argument (path to deffile)
+	cmmd=$(cat <<-EOF
+	ps -g $CMDSID -H -o command | while read -r line
+	do
+		if [[ "\$line" == singularity* ]]
+		then
+			IFS=' ' read -r -a cmdarray <<< "\$line"
+			echo "\${cmdarray[-1]}"
+			break
+		fi
+	done
+	EOF
+	)
+	## run previously define command to get path of definiton file
+	CURRENT_DEFFILE=`bash -c "${cmmd}"`
+	## extract directory path
+	DEFDIR=`dirname -- "${CURRENT_DEFFILE}"`
+
+	## save to environment for %post section
+	#echo "export DEFDIR=\"${DEFDIR}\"" >> "${SINGULARITY_ROOTFS}${SINGULARITY_ENVIRONMENT}"
+
+	## copy host folder to container location
+	mkdir -p ${SINGULARITY_ROOTFS}/project
+	cp -r ${DEFDIR}/../../../hydrogym ${SINGULARITY_ROOTFS}/project
+
+%post
+	apt update
+	apt install -y git libhdf5-dev libxcursor-dev libxinerama1
+	# apt install -y texlive # NOTE did not see where texlive is needed
+
+	# Install Firedrake and components
+	curl -O https://raw.githubusercontent.com/firedrakeproject/firedrake/master/scripts/firedrake-install
+	bash -c "PETSC_CONFIGURE_OPTIONS='--download-fftw=1' python3 firedrake-install --no-package-manager --disable-ssh --remove-build-files --pip-install scipy"
+	export VENV=/project/firedrake/firedrake
+
+	# Install the complex version of firedrake (not differentiable, but useful for stability analysis)
+	bash -c "PETSC_CONFIGURE_OPTIONS='--download-fftw=1' python3 firedrake-install --no-package-manager --disable-ssh --remove-build-files --pip-install scipy --complex --venv-name=firedrake-complex"
+	export VENV_COMPLEX=/project/firedrake/firedrake-complex
+
+	bash -c ". $VENV/bin/activate firedrake-update --documentation-dependencies --tinyasm --slepc --pip-install thetis --pip-install gusto --pip-install icepack --pip-install irksome --pip-install femlium"
+	bash -c ". $VENV_COMPLEX/bin/activate; firedrake-update --documentation-dependencies --tinyasm --slepc --pip-install thetis --pip-install gusto --pip-install icepack --pip-install irksome --pip-install femlium"
+
+	# Install dependencies to install hydrogym with pip
+	bash -c ". $VENV/bin/activate && pip install --upgrade pip setuptools"
+	bash -c ". $VENV_COMPLEX/bin/activate && pip install --upgrade pip setuptools"
+
+	# Install hydrogym package
+	bash -c ". $VENV/bin/activate && pip install -e /home/hydrogym"
+	bash -c ". $VENV_COMPLEX/bin/activate && pip install -e /home/hydrogym"
+
+%environment
+	export VENV=/home/firedrake/firedrake
+	export VENV_COMPLEX=/home/firedrake/firedrake-complex
+	export ENV OMP_NUM_THREADS=1

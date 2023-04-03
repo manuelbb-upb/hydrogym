@@ -1,0 +1,33 @@
+Bootstrap: docker
+From: firedrakeproject/firedrake:latest
+
+%post
+  apt update
+  apt install -y git libhdf5-dev libxcursor-dev libxinerama1
+
+  # bypass safety checks in container to surpress anyoing warnings
+  git config --system --add safe.directory "*"
+  git config --system core.fileMode false
+
+  # update Firedrake and install missing dependencies
+  export VENV=/home/firedrake/firedrake
+  . $VENV/bin/activate
+  pip install --upgrade pip setuptools
+  # firedrake-update --documentation-dependencies --tinyasm --slepc --install thetis --install gusto --install icepack --install irksome --install femlium
+  firedrake-update --documentation-dependencies --tinyasm --slepc --pip-install thetis --pip-install gusto --pip-install icepack --pip-install irksome --pip-install femlium
+
+  # Install hydrogym package
+  cd /home
+  git clone https://github.com/dynamicslab/hydrogym.git
+  pip install -e /home/hydrogym
+
+  # remove `firedrake` user -- else, we get confusing displaying in Singularity shell
+  chown -R root:root /home
+  chmod -R a+rwx /home
+  userdel firedrake
+
+%environment
+  export VENV=/home/firedrake/firedrake
+  export ENV OMP_NUM_THREADS=1
+
+  source ${VENV}/bin/activate

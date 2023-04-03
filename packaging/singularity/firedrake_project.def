@@ -1,0 +1,20 @@
+Bootstrap: docker
+From: firedrakeproject/firedrake-env:latest
+
+%post
+	# Install Firedrake and components
+	curl -O https://raw.githubusercontent.com/firedrakeproject/firedrake/master/scripts/firedrake-install
+	bash -c "PETSC_CONFIGURE_OPTIONS='--download-fftw=1' python3 firedrake-install --no-package-manager --disable-ssh --remove-build-files --pip-install scipy"
+	export VENV=/project/firedrake/firedrake
+
+	# Install the complex version of firedrake (not differentiable, but useful for stability analysis)
+	bash -c "PETSC_CONFIGURE_OPTIONS='--download-fftw=1' python3 firedrake-install --no-package-manager --disable-ssh --remove-build-files --pip-install scipy --complex --venv-name=firedrake-complex"
+	export VENV_COMPLEX=/project/firedrake/firedrake-complex
+
+	bash -c ". $VENV/bin/activate firedrake-update --documentation-dependencies --tinyasm --slepc --pip-install thetis --pip-install gusto --pip-install icepack --pip-install irksome --pip-install femlium"
+	bash -c ". $VENV_COMPLEX/bin/activate; firedrake-update --documentation-dependencies --tinyasm --slepc --pip-install thetis --pip-install gusto --pip-install icepack --pip-install irksome --pip-install femlium"
+
+%environment
+	export VENV=/home/firedrake/firedrake
+	export VENV_COMPLEX=/home/firedrake/firedrake-complex
+	export ENV OMP_NUM_THREADS=1
